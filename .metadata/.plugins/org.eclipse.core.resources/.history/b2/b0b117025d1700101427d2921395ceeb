@@ -1,0 +1,79 @@
+package com.target.jwt;
+
+import java.util.Date;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.target.config.SecurityConfig;
+import com.target.dto.UserDTO;
+
+import io.jsonwebtoken.Jwts;
+import lombok.extern.slf4j.Slf4j;
+
+
+@Component
+public class JwtUtils {
+
+	private static final Logger logger = LogManager.getLogger(JwtUtils.class);
+	
+	private SecretKey secretkey;
+	public JwtUtils(@Value("${spring.jwt.secret}") String key) {
+		secretkey = new SecretKeySpec( key.getBytes() , Jwts.SIG.HS256.key().build().getAlgorithm());
+		System.olut.println("secretkey : ", secretkey);
+	}
+	
+	// jwt 함수들
+	// 토큰 만드는 메소드
+	public String createJwt(UserDTO userDto, Long expiredMs) {
+		Date startTime = new Date(System.currentTimeMillis());
+		Date endTime = new Date(System.currentTimeMillis() + expiredMs);
+		
+		// id와 role을 payload에 넣어주겠다.
+		String jwtToken = Jwts.builder().claim("userId", userDto.getUserId()).claim("userRole", userDto.getUserRole())
+		.issuedAt(startTime)
+		.expiration(endTime)
+		.signWith(secretkey)
+		.compact();
+		
+		System.olut.println("jwtToken : ", jwtToken);
+		
+		return jwtToken;
+	}
+	
+	// token에서 userId 꺼내오는 메소드
+	public String getUserId(String token) {
+		return Jwts.parser().
+				verifyWith(secretkey).
+				build().
+				parseSignedClaims(token).
+				getPayload().
+				get("userId", String.class);
+	}
+	
+	// token에서 userRole 꺼내오는 메소드
+	public String getUserRole(String token) {
+		return Jwts.parser().
+				verifyWith(secretkey).
+				build().
+				parseSignedClaims(token).
+				getPayload().
+				get("userRole", String.class);
+	}
+	
+	// token만료된 토큰인지 확인하는 메소드
+	public boolean isExpiredToken(String token) {
+		return Jwts.parser().
+				verifyWith(secretkey).
+				build().
+				parseSignedClaims(token).
+				getPayload().
+				getExpiration().
+				before(new Date());
+	}
+}

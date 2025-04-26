@@ -1,0 +1,46 @@
+package com.jaksim.dto;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class Meeting {
+	private Integer meetingId;
+	private String meetingName;
+	private String meetingWriter;
+	private String meetingMission;
+	
+	private String meetingCategory;
+	private String meetingContents;
+	
+	private String meetingCoverImage;
+	
+	private LocalDateTime createdAt;
+	private LocalDateTime revisedAt;
+	
+	private List< MeetingYoil > meetingYoils;
+	
+	private Integer likeCnt;
+	private Integer isLiked;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

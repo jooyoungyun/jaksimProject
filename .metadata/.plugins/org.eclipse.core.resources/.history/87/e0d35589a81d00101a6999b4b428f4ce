@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD MyBatis 3 Mapper//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jaksim.mapper.MeetingMapper">
+	<insert id="createMeeting" parameterType="com.jaksim.dto.Meeting" useGeneratedKeys="true" keyProperty="meetingId" >
+		INSERT INTO jaksim_meeting(
+			meeting_name, 
+			meeting_writer,
+			meeting_mission, 
+			meeting_category, 
+			meeting_contents, 
+			created_at, 
+			revised_at ,
+			meeting_cover_image 
+		)
+		VALUES (
+			#{meetingName}, 
+			#{meetingWriter},
+			#{meetingMission},
+			#{meetingCategory},
+			#{meetingContents},
+			#{createdAt},
+			#{revisedAt},
+			#{meetingCoverImage}
+		);
+	</insert>
+	<insert id="createMeetingYoil" parameterType="com.jaksim.dto.MeetingYoil">
+		INSERT INTO meeting_yoil (
+			meeting_id,
+			mission_yoil
+		)
+		values (
+			#{meetingId},
+			#{missionYoil}
+		);
+	</insert>
+	
+	<insert id="createMeetingYoils" parameterType="java.util.List">
+		INSERT INTO meeting_yoil (meeting_id, mission_yoil)
+		VALUES 
+		<foreach collection="list" item="meetingYoil" separator="," >
+			( #{meetingYoil.meetingId} , #{meetingYoil.missionYoil} )
+		</foreach> ;
+	</insert>
+
+
+	<resultMap id="meetingResultMap" type="com.jaksim.dto.Meeting">
+	    <id property="meetingId" column="meeting_id" />
+	    <result property="meetingName" column="meeting_name" />
+	    <result property="meetingWriter" column="meeting_writer" />
+	    <result property="meetingMission" column="meeting_mission" />
+	    <result property="meetingCategory" column="meeting_category" />
+	    <result property="meetingContents" column="meeting_contents" />
+	    <result property="meetingCoverImage" column="meeting_cover_image" />
+	    <result property="createdAt" column="created_at" />
+	    <result property="revisedAt" column="revised_at" />
+	
+	    <!-- 1:N 관계 매핑 -->
+	    <collection property="meetingYoils" ofType="com.jaksim.dto.MeetingYoil">
+	        <id property="id" column="yoil_id" />
+	        <result property="meetingId" column="yoil_meeting_id" />
+	        <result property="missionYoil" column="mission_yoil" />
+	    </collection>
+	</resultMap>
+	
+	<select id="selectMeeting" resultMap="meetingResultMap" parameterType="Integer">
+	    SELECT 
+	        m.meeting_id, 
+	        m.meeting_name, 
+	        m.meeting_writer, 
+	        m.meeting_mission,
+	        m.meeting_category, 
+	        m.meeting_contents, 
+	        m.meeting_cover_image,
+	        m.created_at, 
+	        m.revised_at,
+	        y.id as yoil_id, 
+	        y.meeting_id as yoil_meeting_id, 
+	        y.mission_yoil
+	    FROM jaksim_meeting m LEFT JOIN meeting_yoil y 
+	    ON m.meeting_id = y.meeting_id
+	    WHERE m.meeting_id = #{meetingId}
+	</select>
+	
+	<select id="selectMeetingByPagination" resultMap="meetingResultMap">
+	    SELECT 
+	        m.meeting_id, 
+	        m.meeting_name, 
+	        m.meeting_writer, 
+	        m.meeting_mission,
+	        m.meeting_category, 
+	        m.meeting_contents, 
+	        m.meeting_cover_image,
+	        m.created_at, 
+	        m.revised_at,
+	        y.id as yoil_id, 
+	        y.meeting_id as yoil_meeting_id, 
+	        y.mission_yoil
+	    FROM (
+	        SELECT *
+	        FROM jaksim_meeting
+	        <where>
+	            <if test="category != null and category != 'all' and category != ''">
+	                AND meeting_category = #{category}
+	            </if>
+	            <if test="keyword != null and keyword != ''">
+	                AND meeting_name LIKE CONCAT('%', #{keyword}, '%')
+	            </if>
+	        </where>
+	        ORDER BY created_at DESC
+	        LIMIT #{limit} OFFSET #{offset}
+	    ) m
+	    LEFT JOIN meeting_yoil y ON m.meeting_id = y.meeting_id
+	</select>
+	
+	<select id="countMeetings" resultType="int">
+	    SELECT 
+	       	COUNT(*)
+	    FROM jaksim_meeting
+	    <where>
+	        <if test="category != null and category != 'all' and category != ''">
+	            AND meeting_category = #{category}
+	        </if>
+	        <if test="keyword != null and keyword != ''">
+	            AND meeting_name LIKE CONCAT('%', #{keyword}, '%')
+	        </if>
+	    </where>
+	</select>
+	
+	<delete id="deleteMeeting" parameterType="Integer">
+		DELETE FROM jaksim_meeting 
+		WHERE meeting_id = #{meetingId};
+	</delete>
+	
+	<delete id="deleteMeetingYoil" parameterType="Integer">
+		DELETE FROM meeting_yoil 
+		WHERE meeting_id = #{meetingId};
+	</delete>
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

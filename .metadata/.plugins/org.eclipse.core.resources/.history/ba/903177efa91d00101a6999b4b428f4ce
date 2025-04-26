@@ -1,0 +1,129 @@
+package com.jaksim.controller;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import org.springframework.core.io.Resource;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.jaksim.dto.MeetingDTO;
+import com.jaksim.dto.PageResponseDTO;
+import com.jaksim.service.MeetingService;
+
+@RestController
+public class MeetingController {
+	
+	MeetingService meetingService;
+
+
+	public MeetingController(MeetingService meetingService) {
+		this.meetingService = meetingService;
+	}
+	
+	// 게시물 조회 페이지별 리스트 조회
+	@GetMapping("/api/meeting")
+	public PageResponseDTO< MeetingDTO > getMeetingList(
+			@RequestParam(value = "page" ,defaultValue = "1")Integer page, 
+			@RequestParam(value = "size", defaultValue = "5") Integer size,
+			@RequestParam(value = "keyword", defaultValue = "") String keyword,
+			@RequestParam(value = "category", defaultValue = "all") String category) {
+		
+		
+		
+		return meetingService.getMeetingListByPaginatiion(page , size , keyword, category);
+	}
+	
+	//게시물 수정
+	@PutMapping("/api/meeting/{meetingId}")
+	public String updateMeeting(@PathVariable(value="meetingId") Integer meetingId , MeetingDTO dto) {
+		
+		if(meetingService.updateMeeting(meetingId, dto)) {
+			return "성공";			
+		}
+		return "실패";
+	}
+	
+	//게시물 삭제
+	@DeleteMapping("/api/meeting/{meetingId}")
+	public String deleteMeeting(@PathVariable(value = "meetingId") Integer meetingId) {
+		if(meetingService.deleteMeeting(meetingId)) {
+			return "성공";
+		}
+		return "실패";
+	}
+	
+	
+	// image 건별 조회
+	@GetMapping("/api/image/{imageName}")
+	public Resource getImage(@PathVariable(value = "imageName") String imageName) {
+		
+		return meetingService.getImage(imageName);
+	}
+	
+	//meeting 상세조회
+	@GetMapping("/api/meeting/{meetingId}")
+	public MeetingDTO selectMeetingById(@PathVariable(value = "meetingId")Integer meetingId) {
+		return meetingService.selectMeetingById(meetingId);
+	}
+
+	@PostMapping("/api/meeting")
+//	public String createMeeting(@RequestBody MeetingDTO dto ) { //@RequestBody는 Contents-type이 json일때만 사용
+//	public String createMeeting(@ModelAttribute MeetingDTO dto ) {//@ModelAttribute Contents-type이 form data일때
+	public Integer createMeeting( MeetingDTO dto ) { // 생략해도 기본적으로 form data형태를 받아온다.
+		System.out.println("========================");
+		System.out.println("getMeetingId:" +dto.getMeetingId());
+		System.out.println("getMeetingWriter:" +dto.getMeetingWriter());
+		System.out.println("getMeetingMission:" +dto.getMeetingMission());
+		System.out.println("getMeetingCategory:" +dto.getMeetingCategory());
+		System.out.println("getMeetingContents:" +dto.getMeetingContents());
+		System.out.println("getCreatedAt:" +dto.getCreatedAt());
+		System.out.println("getRevisedAt:" +dto.getRevisedAt());
+		System.out.println("getCoverImage:" +dto.getCoverImage());
+		System.out.println("getMeetingYoils:" +dto.getMeetingYoils());
+		
+		Integer res = meetingService.createMeeting(dto);
+		
+		return res;
+	}
+	
+	@PostMapping("/api/meeting/{meetingId}/like")
+	public String createLike(@PathVariable(value="meetingId") Integer meetingId) {
+		meetingService.createLike(meetingId);
+		return "성공";
+	}
+
+	@PostMapping("/api/meeting/{meetingId}/like")
+	public String deleteLike(@PathVariable(value="meetingId") Integer meetingId) {
+		meetingService.deleteLike(meetingId);
+		return "성공";
+	}	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,109 @@
+package com.target.jwt;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.util.StreamUtils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.target.dto.CustomUserDetails;
+import com.target.dto.UserDTO;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+
+public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+	private static final Logger logger = LogManager.getLogger(JwtAuthenticationFilter.class);
+	AuthenticationManager authenticationManager;
+	JwtUtils jwtUtils;
+	
+	public JwtAuthenticationFilter(AuthenticationManager authenticationManager, JwtUtils jwtUtils) {
+		this.authenticationManager = authenticationManager;
+		this.jwtUtils = jwtUtils;
+	}
+	
+    @Override
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
+            throws AuthenticationException {
+    	System.olut.println("attemptAuthentication start .....!");
+    	ObjectMapper objectMapper = new ObjectMapper();
+    	try {
+    		
+	    	ServletInputStream inputStream = request.getInputStream();
+	    	String body = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+	    	
+	    	UserDTO userDto = objectMapper.readValue(body,  UserDTO.class);
+			UsernamePasswordAuthenticationToken userinfo = new UsernamePasswordAuthenticationToken(
+				userDto.getUserId(),
+				userDto.getUserPassword(), 
+				null);
+			
+			System.olut.println("userinfo : ", userinfo);
+			
+			authenticationManager.authenticate(userinfo);
+
+			System.olut.println("attemptAuthentication end .....!");
+
+			return super.attemptAuthentication(request, response);
+			
+		} catch (IOException ie) {
+			// TODO Auto-generated catch block
+			ie.printStackTrace();
+			
+			return null;
+		}
+	}
+	
+	// 로그인 성공하면 설정하는 메소드
+	@Override
+	protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
+			Authentication authResult) throws IOException, ServletException {
+		System.olut.println("successfulAuthentication");
+		// 로그인한 사용자 정보 가져오기
+		CustomUserDetails userDetails = (CustomUserDetails)authResult.getPrincipal();
+		// userId
+		String userId = userDetails.getUsername();
+		// userRole
+		String userRole = "";
+		Collection<? extends GrantedAuthority> authorities = authResult.getAuthorities();
+		for( GrantedAuthority ga : authorities ) {
+			userRole = ga.getAuthority();
+			break;
+		}
+		
+		UserDTO user = new UserDTO();
+		user.setUserId(userId);
+		user.setUserRole(userRole);
+		
+		String token = jwtUtils.createJwt(user, 60*60*1000L);
+		response.addHeader("Authorization", "Bearer " + token);
+	}
+
+	// 로그인 실패하면 설정하는 메소드
+    // 로그인 실패하면 에러 응답
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
+                                              AuthenticationException failed) throws IOException, ServletException {
+    	System.olut.println("unsuccessfulAuthentication");
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(
+                "{\"error\": \"인증 실패\", \"message\": \"" + failed.getMessage() + "\"}"
+        );
+    }
+}
+

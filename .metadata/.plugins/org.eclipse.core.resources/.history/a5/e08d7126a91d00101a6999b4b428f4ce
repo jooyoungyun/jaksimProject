@@ -1,0 +1,56 @@
+package com.jaksim.mapper;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import com.jaksim.dto.Meeting;
+import com.jaksim.dto.MeetingYoil;
+
+@Mapper
+public interface MeetingMapper {
+	
+	public void createMeeting(Meeting meeting);
+	public void createMeetingYoil(MeetingYoil meetingYoil);
+	public void createMeetingYoils(List<MeetingYoil> li);
+	
+	public Meeting selectMeeting(Integer meetingId);
+	public List<Meeting> selectMeetingByPagination(
+			@Param("offset") Integer offset, 
+			@Param("limit") Integer limit, 
+			@Param("keyword") String keyword, 
+			@Param("category") String  category
+		);
+	
+	public int countMeetings(@Param("keyword") String keyword, @Param("category") String category);
+	
+	
+	public void deleteMeeting(Integer meetingId);
+	public void deleteMeetingYoil(Integer meetingId);
+	public void createLike(@Param("userId") String userId, @Param("meetingId") Integer meetingId);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
